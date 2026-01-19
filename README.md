@@ -184,20 +184,6 @@ MiniProjectRAG/
     └── package.json
 ```
 
-## Time Breakdown
 
-| Task | Time |
-|------|------|
-| Architecture design | 20 min |
-| Chunking + embeddings | 30 min |
-| Vector store integration | 30 min |
-| Retrieval + reranking | 30 min |
-| LLM + citations | 30 min |
-| FastAPI endpoints | 30 min |
-| Frontend UI | 40 min |
-| Testing + docs | 30 min |
-| **Total** | **~4 hours** |
-
----
 
 *Built for a Mini RAG assessment. Optimized for clarity and correctness over feature completeness.*
