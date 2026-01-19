@@ -50,8 +50,17 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+# CORS - Allow frontend origins
+cors_origins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://mini-ra-g-project-jhxq.vercel.app",
+]
+# Also allow origins from environment variable if set
+env_origins = os.getenv("CORS_ORIGINS", "")
+if env_origins:
+    cors_origins.extend(env_origins.split(","))
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
