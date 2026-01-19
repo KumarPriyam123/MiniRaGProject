@@ -10,12 +10,12 @@ k Value Guidance:
 - k=20 (default): Cast wide net before reranking narrows to top 5
 - k=5-10: Direct use without reranker, lower latency
 - k=50+: Complex queries needing broad context, higher cost
+
+NOTE: Lazy imports used to reduce startup memory for Render free tier.
 """
 
 from dataclasses import dataclass
 from typing import Optional
-
-from .vector_store import query_similar
 
 
 @dataclass
@@ -68,6 +68,8 @@ def retrieve(
         for chunk in chunks[:5]:
             print(f"[{chunk.score:.3f}] {chunk.text[:100]}...")
     """
+    from .vector_store import query_similar  # Lazy import
+    
     if not query or not query.strip():
         return []
     

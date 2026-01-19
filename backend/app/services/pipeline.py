@@ -5,16 +5,20 @@ Unified RAG Pipeline
 Flow: Query → Embed → Retrieve → Rerank → LLM → Answer + Citations
 
 This is the main entry point for the RAG system. One function, clear flow.
+
+NOTE: All heavy imports (embedder, vector_store, reranker, llm) are done
+inside functions to enable lazy loading. This reduces startup memory,
+allowing deployment on Render free tier (512MB).
 """
 
+from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-from .embedder import embed_text
-from .vector_store import query_similar
-from .retriever import RetrievedChunk
-from .reranker import rerank
-from .llm import generate_answer, AnswerResponse
+# Type hints only - no runtime import
+if TYPE_CHECKING:
+    from .retriever import RetrievedChunk
+    from .llm import AnswerResponse
 
 
 @dataclass
@@ -64,6 +68,11 @@ def rag_pipeline(
         for src in result.sources:
             print(f"[{src['index']}] {src['text'][:100]}...")
     """
+    # Lazy imports to reduce startup memory
+    from .vector_store import query_similar
+    from .retriever import RetrievedChunk
+    from .reranker import rerank
+    from .llm import generate_answer
     
     # ─────────────────────────────────────────────────────────────────────────
     # STEP 1: RETRIEVE

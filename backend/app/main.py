@@ -36,13 +36,10 @@ load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
-    # Startup: pre-load embedding model
-    print("Loading embedding model...")
-    from .services.embedder import get_model
-    get_model()
-    print("Model loaded.")
+    # NOTE: Model loading is now LAZY (on first request) to reduce startup memory
+    # This allows Render free tier (512MB) to boot successfully
+    print("App starting (models will load on first request)...")
     yield
-    # Shutdown
     print("Shutting down.")
 
 

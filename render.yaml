@@ -1,0 +1,34 @@
+# Render Blueprint - Mini RAG System
+# https://render.com/docs/blueprint-spec
+
+services:
+  # Backend API
+  - type: web
+    name: mini-rag-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      # API Keys (set in Render dashboard for security)
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: COHERE_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      # Configuration
+      - key: PINECONE_INDEX_NAME
+        value: mini-rag
+      - key: CORS_ORIGINS
+        value: https://your-frontend.vercel.app
+      # Memory optimization for free tier
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: MKL_NUM_THREADS
+        value: "1"
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+    healthCheckPath: /health
+    # Free tier has 512MB limit
+    # Models load lazily on first request
+    plan: free

@@ -10,15 +10,19 @@ Citation Strategy:
 - Context chunks are numbered [1], [2], [3]...
 - LLM is instructed to cite inline: "The answer is X [1][3]."
 - If no relevant context, return explicit "I don't know"
+
+NOTE: Lazy imports used to reduce startup memory for Render free tier.
 """
 
+from __future__ import annotations
 import os
 import json
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from groq import Groq
 
-from .retriever import RetrievedChunk
+if TYPE_CHECKING:
+    from .retriever import RetrievedChunk
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -110,7 +114,7 @@ def get_client() -> Groq:
 
 def generate_answer(
     question: str,
-    chunks: list[RetrievedChunk],
+    chunks: list,
     model: str = "llama-3.1-8b-instant",
     max_tokens: int = 1024,
     temperature: float = 0.1  # Low for factual accuracy

@@ -24,13 +24,17 @@ Cohere Rerank:
 - Free tier: 1,000 calls/month
 - Model: rerank-english-v3.0 (or rerank-multilingual-v3.0)
 - Latency: ~200ms for 20 documents
+
+NOTE: Lazy imports used to reduce startup memory for Render free tier.
 """
 
+from __future__ import annotations
 import os
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import cohere
 
-from .retriever import RetrievedChunk
+if TYPE_CHECKING:
+    from .retriever import RetrievedChunk
 
 
 # Cohere client singleton
@@ -50,10 +54,10 @@ def get_client() -> cohere.Client:
 
 def rerank(
     query: str,
-    chunks: list[RetrievedChunk],
+    chunks: list,
     top_k: int = 5,
     model: str = "rerank-english-v3.0"
-) -> list[RetrievedChunk]:
+) -> list:
     """
     Rerank retrieved chunks using Cohere Rerank API.
     
@@ -71,6 +75,8 @@ def rerank(
         chunks = retrieve(query, top_k=20)
         reranked = rerank(query, chunks, top_k=5)
     """
+    from .retriever import RetrievedChunk  # Lazy import
+    
     if not chunks:
         return []
     

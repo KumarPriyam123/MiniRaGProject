@@ -14,19 +14,24 @@ Metadata Strategy:
 - Store all Chunk fields as flat key-value pairs
 - Pinecone metadata supports: str, int, float, bool, list[str]
 - Text stored in metadata for retrieval (Pinecone doesn't return vectors)
+
+NOTE: Lazy imports used for embedder to reduce startup memory.
 """
 
+from __future__ import annotations
 import os
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
 from pinecone import Pinecone
 
-from .chunker import Chunk
-from .embedder import embed_texts, embed_text, EMBEDDING_DIMENSION
+if TYPE_CHECKING:
+    from .chunker import Chunk
 
 
 # Index configuration
 INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "mini-rag")
-DIMENSION = EMBEDDING_DIMENSION  # 384
+EMBEDDING_DIMENSION = 384  # all-MiniLM-L6-v2 dimension
+DIMENSION = EMBEDDING_DIMENSION
 METRIC = "cosine"
 
 # Singleton client
@@ -70,7 +75,7 @@ def get_index():
     return _index
 
 
-def upsert_chunks(chunks: list[Chunk]) -> dict:
+def upsert_chunks(chunks: list) -> dict:
     """
     Embed and upsert chunks to Pinecone.
     
@@ -80,6 +85,8 @@ def upsert_chunks(chunks: list[Chunk]) -> dict:
     Returns:
         {"upserted_count": int, "doc_id": str}
     """
+    from .embedder import embed_texts  # Lazy import
+    
     if not chunks:
         return {"upserted_count": 0, "doc_id": None}
     
@@ -143,6 +150,8 @@ def query_similar(
     Returns:
         List of {id, score, metadata} dicts
     """
+    from .embedder import embed_text  # Lazy import
+    
     index = get_index()
     
     # Embed query

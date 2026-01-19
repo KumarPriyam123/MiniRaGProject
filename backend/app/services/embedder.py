@@ -6,21 +6,34 @@ Model: all-MiniLM-L6-v2
 - Speed: ~14K sentences/sec on CPU
 - Quality: Strong for semantic similarity tasks
 - Size: 80MB (fast cold start)
+
+NOTE: Model is loaded LAZILY on first call to avoid OOM on Render free tier.
 """
 
-from functools import lru_cache
-from sentence_transformers import SentenceTransformer
+from typing import TYPE_CHECKING
+
+# Avoid importing heavy libraries at module load time
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
 
 
 # Model config
 MODEL_NAME = "all-MiniLM-L6-v2"
 EMBEDDING_DIMENSION = 384  # Fixed for this model
 
+# Lazy-loaded model singleton
+_model = None
 
-@lru_cache(maxsize=1)
-def get_model() -> SentenceTransformer:
+
+def get_model() -> "SentenceTransformer":
     """Lazy-load and cache the embedding model."""
-    return SentenceTransformer(MODEL_NAME)
+    global _model
+    if _model is None:
+        print(f"Loading embedding model: {MODEL_NAME}...")
+        from sentence_transformers import SentenceTransformer
+        _model = SentenceTransformer(MODEL_NAME)
+        print("Embedding model loaded.")
+    return _model
 
 
 def embed_texts(texts: list[str]) -> list[list[float]]:
