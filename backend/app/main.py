@@ -9,13 +9,19 @@ Endpoints:
 - GET  /documents - List all documents
 - DELETE /documents/{doc_id} - Delete a document
 - GET  /health    - Health check
+
+CORS & OPTIONS:
+- CORSMiddleware is added FIRST (before any routes)
+- OPTIONS requests are handled automatically by the middleware
+- This prevents 502 errors on preflight requests
 """
 
 import os
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
 from .schemas import (
@@ -25,24 +31,26 @@ from .schemas import (
     HealthResponse, UploadResponse
 )
 
-# Load environment variables
+# Load environment variables FIRST
 load_dotenv()
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# APP SETUP
+# APP SETUP - CORS MUST BE CONFIGURED IMMEDIATELY
 # ═══════════════════════════════════════════════════════════════════════════
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
-    # NOTE: Model loading is now LAZY (on first request) to reduce startup memory
-    # This allows Render free tier (512MB) to boot successfully
-    print("App starting (models will load on first request)...")
+    # NOTE: Model loading is LAZY (on first actual request)
+    # This allows Render free tier (512MB) to boot fast
+    # OPTIONS requests will NOT trigger model loading
+    print("✅ App started (models will load on first POST request)...")
     yield
     print("Shutting down.")
 
 
+# Create app with minimal startup
 app = FastAPI(
     title="Mini RAG API",
     description="Minimal RAG system with retrieval, reranking, and cited answers",
@@ -50,23 +58,32 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS - Allow frontend origins
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CORS MIDDLEWARE - MUST BE ADDED FIRST, BEFORE ANY ROUTES
+# ═══════════════════════════════════════════════════════════════════════════
+# This handles OPTIONS preflight requests automatically
+# CORSMiddleware intercepts OPTIONS before they reach route handlers
+
 cors_origins = [
     "http://localhost:3000",
     "http://localhost:5173",
     "https://mini-ra-g-project-jhxq.vercel.app",
 ]
+
 # Also allow origins from environment variable if set
 env_origins = os.getenv("CORS_ORIGINS", "")
 if env_origins:
-    cors_origins.extend(env_origins.split(","))
+    cors_origins.extend([o.strip() for o in env_origins.split(",") if o.strip()])
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,  # Cache preflight for 10 minutes
 )
 
 

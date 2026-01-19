@@ -1,10 +1,16 @@
-[build]
-  command = "pip install -r requirements.txt"
-  
-[build.environment]
-  PYTHON_VERSION = "3.11"
+# Render Web Service Configuration
+# https://render.com/docs/blueprint-spec
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+services:
+  - type: web
+    name: miniragprojectbackend
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: COHERE_API_KEY
+        sync: false

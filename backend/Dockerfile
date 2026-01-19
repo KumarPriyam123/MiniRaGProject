@@ -22,6 +22,10 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 # Copy app code
 COPY . .
 
-# Run server with single worker for memory efficiency
-# Render free tier has 512MB limit
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+# Expose port for health checks
+EXPOSE 8000
+
+# Run server with single worker and longer timeout for Render free tier
+# --timeout-keep-alive: Keep connections alive longer
+# --limit-concurrency: Limit memory usage
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--timeout-keep-alive", "120"]
