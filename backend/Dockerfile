@@ -22,10 +22,9 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 # Copy app code
 COPY . .
 
-# Expose port for health checks
-EXPOSE 8000
+# Expose port for health checks (Render uses 10000)
+EXPOSE 10000
 
-# Run server with single worker and longer timeout for Render free tier
-# --timeout-keep-alive: Keep connections alive longer
-# --limit-concurrency: Limit memory usage
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--timeout-keep-alive", "120"]
+# Run server - Render automatically sets PORT=10000
+# Use $PORT environment variable for compatibility
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000} --workers 1 --timeout-keep-alive 120"]
