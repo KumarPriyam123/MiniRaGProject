@@ -1,5 +1,5 @@
 {
-  "buildCommand": "node ./node_modules/vite/bin/vite.js build",
+  "buildCommand": "npm exec vite -- build",
   "outputDirectory": "dist",
   "framework": "vite"
 }
