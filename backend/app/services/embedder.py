@@ -1,44 +1,42 @@
 """
-Text embedding using sentence-transformers.
+Text embedding using Cohere API (cloud-based, no local model needed).
 
-Model: all-MiniLM-L6-v2
+Model: embed-english-light-v3.0
 - Dimension: 384
-- Speed: ~14K sentences/sec on CPU
-- Quality: Strong for semantic similarity tasks
-- Size: 80MB (fast cold start)
+- Speed: Fast API calls
+- Quality: Good for semantic similarity
+- Memory: ~0MB (API-based, no local model)
 
-NOTE: Model is loaded LAZILY on first call to avoid OOM on Render free tier.
+This avoids OOM issues on Render free tier (512MB limit).
 """
 
-from typing import TYPE_CHECKING
+import os
+from typing import Optional
+import cohere
 
-# Avoid importing heavy libraries at module load time
-if TYPE_CHECKING:
-    from sentence_transformers import SentenceTransformer
+# Model config - using light model for 384 dimensions
+MODEL_NAME = "embed-english-light-v3.0"
+EMBEDDING_DIMENSION = 384
 
-
-# Model config
-MODEL_NAME = "all-MiniLM-L6-v2"
-EMBEDDING_DIMENSION = 384  # Fixed for this model
-
-# Lazy-loaded model singleton
-_model = None
+# Lazy-loaded client singleton
+_client: Optional[cohere.Client] = None
 
 
-def get_model() -> "SentenceTransformer":
-    """Lazy-load and cache the embedding model."""
-    global _model
-    if _model is None:
-        print(f"Loading embedding model: {MODEL_NAME}...")
-        from sentence_transformers import SentenceTransformer
-        _model = SentenceTransformer(MODEL_NAME)
-        print("Embedding model loaded.")
-    return _model
+def get_client() -> cohere.Client:
+    """Get or create Cohere client."""
+    global _client
+    if _client is None:
+        api_key = os.getenv("COHERE_API_KEY")
+        if not api_key:
+            raise ValueError("COHERE_API_KEY environment variable not set")
+        _client = cohere.Client(api_key)
+        print("✅ Cohere embedding client initialized")
+    return _client
 
 
 def embed_texts(texts: list[str]) -> list[list[float]]:
     """
-    Generate embeddings for a list of texts.
+    Generate embeddings for a list of texts using Cohere API.
     
     Args:
         texts: List of strings to embed
@@ -49,16 +47,31 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     if not texts:
         return []
     
-    model = get_model()
-    embeddings = model.encode(
-        texts,
-        convert_to_numpy=True,
-        normalize_embeddings=True,  # L2 normalize for cosine similarity
-        show_progress_bar=False
+    client = get_client()
+    
+    # Cohere API call - much faster than local model
+    response = client.embed(
+        texts=texts,
+        model=MODEL_NAME,
+        input_type="search_document",  # For documents being stored
+        truncate="END"
     )
-    return embeddings.tolist()
+    
+    return response.embeddings
+
+
+def embed_query(text: str) -> list[float]:
+    """Embed a query string (uses different input_type for better search)."""
+    client = get_client()
+    response = client.embed(
+        texts=[text],
+        model=MODEL_NAME,
+        input_type="search_query",  # For search queries
+        truncate="END"
+    )
+    return response.embeddings[0]
 
 
 def embed_text(text: str) -> list[float]:
-    """Embed a single text string."""
+    """Embed a single text string (document)."""
     return embed_texts([text])[0]

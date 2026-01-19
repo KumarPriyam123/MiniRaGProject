@@ -111,16 +111,15 @@ async def debug_env():
 @app.post("/warmup", tags=["Health"])
 async def warmup():
     """
-    Preload heavy models (embedding model, Pinecone connection).
+    Initialize connections (Cohere API, Pinecone).
     Call this after cold start to prepare for actual requests.
-    Takes 30-60 seconds on first call, instant on subsequent calls.
     """
     try:
-        # Load embedding model
-        from .services.embedder import get_model
-        print("Loading embedding model...")
-        get_model()
-        print("✅ Embedding model loaded")
+        # Initialize Cohere client (for embeddings)
+        from .services.embedder import get_client
+        print("Initializing Cohere client...")
+        get_client()
+        print("✅ Cohere client ready")
         
         # Test Pinecone connection
         from .services.vector_store import get_index
@@ -128,7 +127,7 @@ async def warmup():
         get_index()
         print("✅ Pinecone connected")
         
-        return {"status": "ready", "message": "Models loaded and ready"}
+        return {"status": "ready", "message": "Services initialized and ready"}
     except Exception as e:
         return JSONResponse(
             status_code=500,
@@ -142,7 +141,7 @@ async def ingest_document(request: IngestRequest):
     Ingest text into the RAG system.
     
     - Chunks text with token-based splitting (1000 tokens, 120 overlap)
-    - Embeds chunks using all-MiniLM-L6-v2
+    - Embeds chunks using Cohere API
     - Stores in Pinecone vector database
     """
     # Check required env vars BEFORE importing heavy modules

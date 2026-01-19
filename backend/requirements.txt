@@ -7,13 +7,14 @@ python-dotenv
 python-multipart
 
 # ML & Embeddings  
-sentence-transformers
+# NOTE: Using Cohere API for embeddings instead of local model
+# This avoids OOM on Render free tier (512MB limit)
 tiktoken
 
 # Vector DB
 pinecone
 
-# Reranker
+# Reranker + Embeddings (API-based, no local model)
 cohere
 
 # LLM

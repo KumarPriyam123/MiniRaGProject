@@ -150,12 +150,12 @@ def query_similar(
     Returns:
         List of {id, score, metadata} dicts
     """
-    from .embedder import embed_text  # Lazy import
+    from .embedder import embed_query  # Use query-specific embedding
     
     index = get_index()
     
-    # Embed query
-    query_embedding = embed_text(query)
+    # Embed query (uses search_query input_type for better results)
+    query_embedding = embed_query(query)
     
     # Build filter
     filter_dict = None
