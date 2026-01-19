@@ -1,0 +1,27 @@
+# Backend dependencies
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+python-dotenv
+python-multipart
+
+# ML & Embeddings  
+sentence-transformers
+tiktoken
+
+# Vector DB
+pinecone
+
+# Reranker
+cohere
+
+# LLM
+groq
+
+# Text processing
+langchain-text-splitters
+
+# File extraction
+PyMuPDF
+python-docx
