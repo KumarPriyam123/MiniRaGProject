@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 
-const API_BASE = '/api'
+// API base URL: uses env variable in production, proxy in development
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
 
 // Rough token estimate: ~4 chars per token for English
 const estimateTokens = (text) => Math.ceil((text?.length || 0) / 4)
