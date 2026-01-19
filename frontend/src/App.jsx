@@ -29,17 +29,24 @@ export default function App() {
     if (!ingestText.trim()) return
     
     setIngesting(true)
-    setIngestStatus(null)
+    setIngestStatus({ success: true, message: 'Processing... (first request may take 30-60s)' })
     
     try {
+      // Create AbortController for timeout (2 minutes for cold start)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 120000)
+      
       const res = await fetch(`${API_BASE}/ingest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: ingestText,
           metadata: { title: docTitle || 'Untitled' }
-        })
+        }),
+        signal: controller.signal
       })
+      
+      clearTimeout(timeoutId)
       const data = await res.json()
       setIngestStatus({
         success: data.status === 'success',

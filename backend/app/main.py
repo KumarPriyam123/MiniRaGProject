@@ -108,6 +108,34 @@ async def debug_env():
     }
 
 
+@app.post("/warmup", tags=["Health"])
+async def warmup():
+    """
+    Preload heavy models (embedding model, Pinecone connection).
+    Call this after cold start to prepare for actual requests.
+    Takes 30-60 seconds on first call, instant on subsequent calls.
+    """
+    try:
+        # Load embedding model
+        from .services.embedder import get_model
+        print("Loading embedding model...")
+        get_model()
+        print("✅ Embedding model loaded")
+        
+        # Test Pinecone connection
+        from .services.vector_store import get_index
+        print("Connecting to Pinecone...")
+        get_index()
+        print("✅ Pinecone connected")
+        
+        return {"status": "ready", "message": "Models loaded and ready"}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "message": str(e)}
+        )
+
+
 @app.post("/ingest", response_model=IngestResponse, tags=["Ingest"])
 async def ingest_document(request: IngestRequest):
     """
