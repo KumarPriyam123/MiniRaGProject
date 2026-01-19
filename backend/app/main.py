@@ -97,6 +97,17 @@ async def health_check():
     return HealthResponse(status="healthy")
 
 
+@app.get("/debug/env", tags=["Debug"])
+async def debug_env():
+    """Check if required environment variables are set (doesn't expose values)."""
+    return {
+        "PINECONE_API_KEY": "✅ Set" if os.getenv("PINECONE_API_KEY") else "❌ Missing",
+        "GROQ_API_KEY": "✅ Set" if os.getenv("GROQ_API_KEY") else "❌ Missing",
+        "COHERE_API_KEY": "✅ Set" if os.getenv("COHERE_API_KEY") else "❌ Missing",
+        "PINECONE_INDEX_NAME": os.getenv("PINECONE_INDEX_NAME", "mini-rag (default)"),
+    }
+
+
 @app.post("/ingest", response_model=IngestResponse, tags=["Ingest"])
 async def ingest_document(request: IngestRequest):
     """
@@ -106,9 +117,13 @@ async def ingest_document(request: IngestRequest):
     - Embeds chunks using all-MiniLM-L6-v2
     - Stores in Pinecone vector database
     """
-    from .services.pipeline import ingest_text
+    # Check required env vars BEFORE importing heavy modules
+    if not os.getenv("PINECONE_API_KEY"):
+        raise HTTPException(status_code=500, detail="PINECONE_API_KEY not configured")
     
     try:
+        from .services.pipeline import ingest_text
+        
         result = ingest_text(
             text=request.text,
             doc_id=request.doc_id,
@@ -116,6 +131,8 @@ async def ingest_document(request: IngestRequest):
         )
         return IngestResponse(**result)
     except Exception as e:
+        import traceback
+        print(f"Ingest error: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
